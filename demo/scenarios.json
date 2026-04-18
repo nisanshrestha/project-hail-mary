@@ -1,0 +1,116 @@
+[
+    {
+        "id": "scenario-1",
+        "name": "Ambush at Checkpoint Delta",
+        "description": "Alpha squad was conducting a security patrol when they were ambushed by small arms fire at Checkpoint Delta. Four soldiers sustained injuries from direct fire and fragmentation.",
+        "environment": "Urban checkpoint, daytime, moderate cover available",
+        "casualties": [
+            {
+                "soldier_id": "soldier-001",
+                "injury_key": "gsw_chest",
+                "narrative": "SGT Morrison took a round to the right chest. Sucking chest wound visible, decreasing SpO2, tachycardic."
+            },
+            {
+                "soldier_id": "soldier-002",
+                "injury_key": "fragment_wound",
+                "narrative": "CPL Santos hit by concrete fragments in lower left leg. Superficial wounds, ambulatory. NOTE: Penicillin allergy — adjust antibiotics."
+            },
+            {
+                "soldier_id": "soldier-003",
+                "injury_key": "fracture_femur",
+                "narrative": "PFC Kim was struck by vehicle debris. Obvious right femur deformity, severe pain, moderate swelling. NOTE: Type 2 Diabetic on Metformin."
+            },
+            {
+                "soldier_id": "soldier-005",
+                "injury_key": "laceration",
+                "narrative": "SPC Williams has minor lacerations to forearms from glass fragments. Bleeding controlled with pressure."
+            }
+        ],
+        "expected_triage_order": [
+            "SGT Morrison (T1 — GSW chest, score ~95)",
+            "PFC Kim (T2 — Femur fracture, score ~62)",
+            "CPL Santos (T3 — Fragment wound, score ~35)",
+            "SPC Williams (T3 — Lacerations, score ~30)"
+        ],
+        "key_allergy_flags": [
+            "CPL Santos — Penicillin allergy (severe). Do NOT use Penicillin for wound prophylaxis. Use Moxifloxacin 400mg PO."
+        ]
+    },
+    {
+        "id": "scenario-2",
+        "name": "IED Strike on Convoy",
+        "description": "A vehicle-borne IED detonated alongside a convoy. Five soldiers from multiple vehicles sustained blast, burn, and ballistic injuries. Mass casualty event.",
+        "environment": "Rural road, daytime, vehicles disabled, secondary attack possible",
+        "casualties": [
+            {
+                "soldier_id": "soldier-011",
+                "injury_key": "traumatic_amputation",
+                "narrative": "SSG Tanaka — traumatic amputation of right arm above the elbow from blast. Active arterial hemorrhage, tourniquet applied. NOTE: History of prior pneumothorax — monitor for recurrence."
+            },
+            {
+                "soldier_id": "soldier-006",
+                "injury_key": "burns_moderate",
+                "narrative": "CPT Volkov — 35% BSA burns from vehicle fire, face and torso. Conscious but in severe pain. CRITICAL: Morphine allergy — must use Ketamine for pain management."
+            },
+            {
+                "soldier_id": "soldier-008",
+                "injury_key": "blast_tbi",
+                "narrative": "SGT Nair — blast-induced TBI, confused, GCS 11, unequal pupils. NOTE: G6PD deficiency — avoid oxidative drugs."
+            },
+            {
+                "soldier_id": "soldier-007",
+                "injury_key": "fragment_wound",
+                "narrative": "SPC O'Brien — multiple shrapnel wounds to back and legs. None penetrating deeply. Ambulatory with assistance. NOTE: Latex allergy — use nitrile gloves."
+            },
+            {
+                "soldier_id": "soldier-012",
+                "injury_key": "gsw_abdomen",
+                "narrative": "LT Hawkins — secondary small arms fire during the ambush, GSW to abdomen. Hemodynamically unstable, rigid abdomen."
+            }
+        ],
+        "expected_triage_order": [
+            "SSG Tanaka (T1 — Traumatic amputation, score ~94+8=100, pneumothorax history bonus)",
+            "LT Hawkins (T1 — GSW abdomen, score ~92)",
+            "SGT Nair (T2 — Blast TBI, score ~73, G6PD modifier)",
+            "CPT Volkov (T2 — Burns 35% BSA, score ~62)",
+            "SPC O'Brien (T3 — Fragment wounds, score ~35)"
+        ],
+        "key_allergy_flags": [
+            "CPT Volkov — Morphine allergy (severe). For pain management: Ketamine 50mg IM/IV ONLY.",
+            "SPC O'Brien — Latex allergy. Use NITRILE gloves for all treatment.",
+            "SGT Nair — G6PD deficiency. AVOID primaquine, dapsone, methylene blue."
+        ]
+    },
+    {
+        "id": "scenario-3",
+        "name": "Building Assault CQB",
+        "description": "Close quarters battle during a building clearing operation. Three soldiers wounded by hostile fire and blast effects inside a confined structure.",
+        "environment": "Indoor CQB, low light, confined spaces, dust and debris",
+        "casualties": [
+            {
+                "soldier_id": "soldier-010",
+                "injury_key": "tension_pneumothorax",
+                "narrative": "PFC Ortega — hit by round that deflected off plate carrier, developing tension pneumothorax. Tracheal deviation, absent breath sounds on left. Needs immediate needle decompression."
+            },
+            {
+                "soldier_id": "soldier-009",
+                "injury_key": "gsw_extremity",
+                "narrative": "CW2 Blake — GSW to left thigh, through-and-through, bleeding controlled with wound packing. NOTE: Codeine allergy + on Sertraline for PTSD — monitor for drug interactions."
+            },
+            {
+                "soldier_id": "soldier-005",
+                "injury_key": "concussion",
+                "narrative": "SPC Williams — concussive blast from breaching charge. Dazed, mild headache, GCS 15. No LOC witnessed."
+            }
+        ],
+        "expected_triage_order": [
+            "PFC Ortega (T1 — Tension pneumothorax, score ~96)",
+            "CW2 Blake (T2 — GSW extremity, score ~65)",
+            "SPC Williams (T3 — Concussion, score ~40)"
+        ],
+        "key_allergy_flags": [
+            "CW2 Blake — Codeine allergy (moderate). For pain: use Ketamine. Also on Sertraline — avoid Tramadol (serotonin syndrome risk).",
+            "PFC Ortega — Tetracycline allergy (mild). Use Moxifloxacin for antibiotic prophylaxis."
+        ]
+    }
+]

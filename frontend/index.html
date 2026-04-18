@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>HAIL MARY // FIELD MED TERMINAL</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER — Unit ID + system status -->
+        <header class="header">
+            <div class="header-left">
+                <span class="unit-badge" id="unit-name">1ST PLT ALPHA CO</span>
+                <span class="app-title">HAIL MARY</span>
+            </div>
+            <div class="header-right">
+                <div class="status-indicators">
+                    <span><span class="status-dot off" id="status-denoiser"></span>DNR</span>
+                    <span><span class="status-dot off" id="status-elevenlabs"></span>VOX</span>
+                    <span><span class="status-dot off" id="status-ai"></span><span id="ai-label">AI</span></span>
+                </div>
+                <div class="mode-toggle">
+                    <label id="label-rules" class="active">TCCC</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="mode-toggle" aria-label="Toggle AI narrative mode">
+                        <span class="toggle-slider"></span>
+                    </div>
+                    <label id="label-ai">AI</label>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN — Triage queue (left) + Patient/Roster (right) -->
+        <main class="main-content">
+            <!-- Voice panel hidden — controls are in bottom bar -->
+            <div class="panel voice-panel"></div>
+
+            <!-- LEFT: Triage Queue + Response output -->
+            <div class="panel triage-panel">
+                <div class="panel-title">TRIAGE QUEUE</div>
+                <div class="triage-queue" id="triage-queue">
+                    <div class="empty-state">
+                        <div class="icon">+</div>
+                        <p>NO CASUALTIES REPORTED.<br>
+                           SPEAK OR TYPE SOLDIER NAME + INJURY.<br>
+                           LOAD SCENARIO FROM BOTTOM.</p>
+                    </div>
+                </div>
+                <div class="response-box" id="response-box">
+                    <span class="none-tag">STANDBY</span>
+                </div>
+                <div class="response-audio" id="response-audio-wrap">
+                    <button type="button" id="tts-play-btn" class="tts-play-btn" style="display:none" aria-label="Play voice briefing">▶ Play briefing</button>
+                    <audio id="audio-response" style="display:none" controls playsinline preload="auto"></audio>
+                </div>
+            </div>
+
+            <!-- RIGHT: Patient Detail + Roster -->
+            <div class="panel detail-panel">
+                <div class="panel-title">PATIENT RECORD</div>
+                <div id="patient-detail">
+                    <div class="panel-title" style="margin-top:0">UNIT ROSTER</div>
+                    <div class="roster-list" id="roster-list"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- BOTTOM BAR — Voice + Text + Scenarios
+             Positioned for thumb reach on tablets -->
+        <footer class="bottom-bar">
+            <!-- Row 1: PTT button + transcript + text input -->
+            <div class="bottom-voice-row">
+                <button class="ptt-button" id="ptt-button">
+                    <svg class="ptt-icon" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2.5"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" y1="19" x2="12" y2="23"/>
+                        <line x1="8" y1="23" x2="16" y2="23"/>
+                    </svg>
+                    <span class="ptt-label">PTT</span>
+                </button>
+
+                <div class="transcript-box">
+                    <div class="label">TRANSCRIPT</div>
+                    <div id="transcript-text">STANDBY</div>
+                </div>
+
+                <div class="text-input-area">
+                    <input type="text" id="text-input" placeholder="TYPE HERE">
+                    <button id="text-submit">XMIT</button>
+                </div>
+            </div>
+
+            <!-- Row 2: Scenario loaders -->
+            <div class="bottom-scenarios-row">
+                <span class="scn-label">SCENARIO:</span>
+                <button class="scenario-btn" data-scenario="scenario-1">01 AMBUSH</button>
+                <button class="scenario-btn" data-scenario="scenario-2">02 IED</button>
+                <button class="scenario-btn" data-scenario="scenario-3">03 CQB</button>
+            </div>
+
+            <div class="last-command" id="last-command"></div>
+        </footer>
+    </div>
+
+    <script src="js/voice.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

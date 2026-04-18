@@ -1,0 +1,1096 @@
+/* =========================================================
+   Project Hail Mary — Palantir Gotham / Anduril Lattice 
+   Design Language
+
+   Blueprint dark theme palette (#1C2127 → #394B59) with
+   Lattice operational accents. Clean geometry, elevation 
+   shadows, system sans-serif stack, crisp 1px borders.
+
+   ALL touch targets remain 60px+ for gloved operation.
+   ALL text remains oversized for goggle readability.
+   ========================================================= */
+
+:root {
+    /* Blueprint Dark Grays */
+    --bg-app:       #1C2127;
+    --bg-panel:     #252A31;
+    --bg-card:      #2F343C;
+    --bg-raised:    #383E47;
+    --bg-hover:     #404854;
+    --bg-well:      #111418;
+    --bg-overlay:   #0E1116;
+
+    /* Borders & Dividers (Blueprint dark divider) */
+    --border:       rgba(17, 20, 24, 0.4);
+    --border-solid: #383E47;
+    --border-focus: #4C90F0;
+
+    /* Palantir Blueprint Intent Colors */
+    --blue:         #4C90F0;
+    --blue-dim:     #2D72D2;
+    --blue-bg:      rgba(76, 144, 240, 0.1);
+    --green:        #32A467;
+    --green-bg:     rgba(50, 164, 103, 0.1);
+    --orange:       #EC9A3C;
+    --orange-bg:    rgba(236, 154, 60, 0.08);
+    --red:          #E76A6E;
+    --red-bg:       rgba(231, 106, 110, 0.1);
+    --red-bright:   #FF6E6E;
+
+    /* Triage mapping onto Blueprint intents */
+    --t1:           #E76A6E;
+    --t1-bg:        rgba(231, 106, 110, 0.12);
+    --t2:           #EC9A3C;
+    --t2-bg:        rgba(236, 154, 60, 0.10);
+    --t3:           #F0C53A;
+    --t3-bg:        rgba(240, 197, 58, 0.08);
+    --t4:           #738091;
+    --t4-bg:        rgba(115, 128, 145, 0.06);
+
+    /* Text (Blueprint dark text) */
+    --text:         #ABB3BF;
+    --text-muted:   #738091;
+    --text-heading: #F6F7F9;
+    --text-disabled:#5F6B7C;
+
+    /* Fonts (Blueprint system stack) */
+    --font-sans:    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                    'Helvetica Neue', Arial, sans-serif;
+    --font-mono:    'SF Mono', 'Cascadia Code', 'Fira Mono', 'Roboto Mono',
+                    'Droid Sans Mono', monospace;
+
+    /* Glove-safe sizing */
+    --touch-min:    60px;
+    --radius:       3px;
+
+    /* Blueprint elevation shadows (dark theme) */
+    --shadow-1:     0 0 0 1px rgba(17,20,24,.4), 0 1px 1px rgba(17,20,24,.6);
+    --shadow-2:     0 0 0 1px rgba(17,20,24,.4), 0 2px 6px rgba(17,20,24,.6);
+    --shadow-3:     0 0 0 1px rgba(17,20,24,.4), 0 4px 12px rgba(17,20,24,.7);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    font-family: var(--font-sans);
+    background: var(--bg-app);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.5;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* ================================================================
+   LAYOUT — kept identical for glove usability
+   ================================================================ */
+.app-container {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100vh;
+    height: 100dvh;
+}
+
+/* ================================================================
+   HEADER — Lattice top bar
+   ================================================================ */
+.header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    padding: 0 16px;
+    height: 56px;
+    background: var(--bg-overlay);
+    border-bottom: 1px solid var(--border-solid);
+    box-shadow: var(--shadow-1);
+    z-index: 10;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.unit-badge {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--blue);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border: 1px solid var(--blue-dim);
+    border-radius: var(--radius);
+    background: var(--blue-bg);
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+}
+
+.app-title {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-heading);
+    letter-spacing: 1.5px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Status LEDs */
+.status-indicators {
+    display: flex;
+    gap: 14px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.status-indicators > span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-dot.on {
+    background: var(--green);
+    box-shadow: 0 0 0 2px rgba(50,164,103,0.25);
+}
+
+.status-dot.off {
+    background: var(--bg-raised);
+    border: 1.5px solid var(--text-disabled);
+}
+
+/* Mode toggle — Blueprint switch */
+.mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.mode-toggle label {
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px 4px;
+    min-height: var(--touch-min);
+    display: flex;
+    align-items: center;
+    transition: color 0.15s;
+}
+
+.mode-toggle label.active {
+    color: var(--blue);
+}
+
+.toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    cursor: pointer;
+    min-height: var(--touch-min);
+    display: flex;
+    align-items: center;
+}
+
+/* Full-size invisible input so clicks on the track hit the checkbox (0×0 was unclickable). */
+.toggle-switch input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.toggle-slider {
+    position: absolute;
+    width: 52px;
+    height: 28px;
+    pointer-events: none;
+    z-index: 1;
+    background: var(--bg-well);
+    border: 1px solid var(--border-solid);
+    border-radius: 14px;
+    transition: all 0.2s;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    left: 2px;
+    top: 2px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--blue-dim);
+    border-color: var(--blue);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(24px);
+    background: #fff;
+}
+
+/* ================================================================
+   MAIN CONTENT — two-column, same proportions
+   ================================================================ */
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--bg-well);
+    overflow: hidden;
+}
+
+.panel {
+    background: var(--bg-panel);
+    overflow-y: auto;
+    padding: 12px;
+    position: relative;
+}
+
+.voice-panel { display: none; }
+
+.panel-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0 0 8px 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-solid);
+}
+
+/* ================================================================
+   TRIAGE QUEUE — Blueprint Card + intent colored left edge
+   ================================================================ */
+.triage-panel { padding: 12px; }
+
+.triage-queue {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.triage-card {
+    display: grid;
+    grid-template-columns: 60px 1fr 52px;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+    min-height: var(--touch-min);
+    background: var(--bg-card);
+    border: 1px solid var(--border-solid);
+    border-left: 5px solid;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.1s;
+    box-shadow: var(--shadow-1);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.triage-card:active,
+.triage-card:hover {
+    background: var(--bg-hover);
+}
+
+.triage-card.selected {
+    outline: 2px solid var(--blue);
+    outline-offset: -1px;
+    box-shadow: var(--shadow-2), 0 0 0 2px rgba(76,144,240,0.2);
+}
+
+.triage-card.t1 {
+    border-left-color: var(--t1);
+    background: linear-gradient(90deg, var(--t1-bg) 0%, var(--bg-card) 35%);
+}
+.triage-card.t2 {
+    border-left-color: var(--t2);
+    background: linear-gradient(90deg, var(--t2-bg) 0%, var(--bg-card) 35%);
+}
+.triage-card.t3 {
+    border-left-color: var(--t3);
+    background: linear-gradient(90deg, var(--t3-bg) 0%, var(--bg-card) 35%);
+}
+.triage-card.t4 {
+    border-left-color: var(--t4);
+}
+
+.triage-badge {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.triage-badge .cat-sub {
+    display: block;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    opacity: 0.5;
+    margin-top: 1px;
+}
+
+.t1 .triage-badge { color: var(--t1); }
+.t2 .triage-badge { color: var(--t2); }
+.t3 .triage-badge { color: var(--t3); }
+.t4 .triage-badge { color: var(--t4); }
+
+.triage-info h3 {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-heading);
+    margin-bottom: 2px;
+}
+
+.triage-info .injury {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+}
+
+.triage-score {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 700;
+    text-align: right;
+}
+
+.t1 .triage-score { color: var(--t1); }
+.t2 .triage-score { color: var(--t2); }
+.t3 .triage-score { color: var(--t3); }
+.t4 .triage-score { color: var(--t4); }
+
+.triage-blood {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--red-bright);
+    border: 1px solid rgba(231, 106, 110, 0.35);
+    border-radius: var(--radius);
+    background: var(--red-bg);
+    vertical-align: middle;
+}
+
+.march-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 6px;
+    border: 1px solid var(--border-solid);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    background: var(--bg-well);
+    display: inline-block;
+    margin-top: 3px;
+}
+
+.alert-indicator {
+    color: var(--red-bright);
+    font-size: 15px;
+    margin-right: 4px;
+    animation: alert-blink 1s step-start infinite;
+}
+
+@keyframes alert-blink { 50% { opacity: 0; } }
+
+/* Response output — Blueprint code block style */
+.response-box {
+    margin-top: 10px;
+    background: var(--bg-well);
+    border: 1px solid var(--border-solid);
+    border-radius: var(--radius);
+    padding: 14px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    max-height: 40vh;
+    overflow-y: auto;
+    color: var(--text);
+    box-shadow: inset 0 1px 2px rgba(17,20,24,0.5);
+}
+
+.response-box .allergy-alert {
+    color: var(--red-bright);
+    font-weight: 700;
+}
+
+.response-box .blood-line {
+    color: var(--red-bright);
+    font-weight: 700;
+}
+
+.response-box .march-line {
+    color: var(--blue);
+    font-weight: 700;
+}
+
+.response-box .injury-line {
+    color: var(--text-heading);
+    font-weight: 700;
+}
+
+.response-box .med-conflict-line {
+    color: var(--orange);
+    font-weight: 600;
+}
+
+.response-box .comorbid-line {
+    color: var(--orange);
+    font-weight: 600;
+}
+
+.response-box .response-section-label {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.response-audio {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.tts-play-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 18px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-heading);
+    background: var(--blue-bg);
+    border: 1px solid rgba(76, 144, 240, 0.45);
+    border-radius: var(--radius);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.tts-play-btn:active {
+    background: var(--bg-hover);
+}
+
+#audio-response {
+    flex: 1;
+    min-width: 180px;
+}
+
+/* ================================================================
+   PATIENT DETAIL — Blueprint data sections
+   ================================================================ */
+.detail-panel { font-size: 15px; }
+
+.patient-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-solid);
+}
+
+.patient-rank {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--blue);
+    border: 1px solid var(--blue-dim);
+    border-radius: var(--radius);
+    padding: 4px 12px;
+    background: var(--blue-bg);
+    letter-spacing: 0.5px;
+}
+
+.patient-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-heading);
+}
+
+/* ---- Bio grid — 2-col identity data ---- */
+.bio-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border-solid);
+    border: 1px solid var(--border-solid);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+
+.bio-cell {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 10px;
+    background: var(--bg-card);
+    min-height: 44px;
+}
+
+.bio-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+
+.bio-value {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--text-heading);
+}
+
+.bio-value.blood-val {
+    color: var(--red-bright);
+    font-weight: 700;
+    font-size: 16px;
+}
+
+/* ---- Vitals grid — inline vital signs ---- */
+.vitals-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.vital-cell {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-solid);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    min-width: 100px;
+}
+
+.vital-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.vital-value {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-heading);
+}
+
+.vital-unit {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-disabled);
+}
+
+/* Live HR/RR graph (baseline dashed + simulated trace) */
+.vitals-live-section {
+    margin-bottom: 12px;
+    padding: 10px;
+    background: var(--bg-well);
+    border: 1px solid var(--border-solid);
+    border-radius: var(--radius);
+}
+
+.vitals-live-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.vitals-live-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--blue);
+}
+
+.vitals-live-hint {
+    font-size: 10px;
+    color: var(--text-muted);
+    max-width: 100%;
+}
+
+.vitals-canvas-wrap {
+    width: 100%;
+    min-height: 140px;
+}
+
+.vitals-hr-rr-canvas {
+    display: block;
+    width: 100%;
+    height: 140px;
+}
+
+.vitals-live-section.vitals-focus-flash {
+    animation: vitalsPulse 0.6s ease-out 2;
+    box-shadow: 0 0 0 1px var(--blue);
+}
+
+@keyframes vitalsPulse {
+    0% { box-shadow: 0 0 0 0 rgba(76, 144, 240, 0.5); }
+    100% { box-shadow: 0 0 0 8px rgba(76, 144, 240, 0); }
+}
+
+.vitals-legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 8px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+}
+
+.vitals-legend-row .leg-hr { color: rgba(120, 170, 255, 0.95); }
+.vitals-legend-row .leg-rr { color: rgba(120, 220, 200, 0.95); }
+.vitals-legend-row .leg-bl { color: var(--text-muted); }
+
+/* ---- Detail sections ---- */
+.detail-section { margin-bottom: 14px; }
+
+.detail-section h4 {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.detail-section-secondary h4 {
+    opacity: 0.85;
+    font-weight: 600;
+}
+
+.detail-tag {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    padding: 8px 12px;
+    margin: 4px 0;
+    border-radius: var(--radius);
+    border: 1px solid;
+}
+
+.detail-tag .tag-head {
+    font-weight: 600;
+}
+
+.detail-tag .tag-sev {
+    opacity: 0.7;
+    font-size: 12px;
+}
+
+.detail-tag .tag-detail {
+    font-size: 12px;
+    margin-top: 4px;
+    line-height: 1.5;
+    opacity: 0.75;
+    font-weight: 400;
+}
+
+.blood-type {
+    display: inline-block;
+    background: var(--red-bg);
+    color: var(--red-bright);
+    font-size: 20px;
+    font-weight: 700;
+    padding: 6px 16px;
+    letter-spacing: 1px;
+    border-color: rgba(231,106,110,0.3);
+}
+
+.allergy-tag {
+    background: var(--red-bg);
+    color: var(--red-bright);
+    border-color: rgba(231,106,110,0.3);
+}
+
+.condition-tag {
+    background: var(--orange-bg);
+    color: var(--orange);
+    border-color: rgba(236,154,60,0.3);
+}
+
+.med-tag {
+    display: inline-block;
+    background: var(--blue-bg);
+    color: var(--blue);
+    border-color: rgba(76,144,240,0.25);
+}
+
+.none-tag {
+    color: var(--text-disabled);
+    font-family: var(--font-mono);
+    font-size: 13px;
+}
+
+/* Empty states */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    text-align: center;
+    gap: 12px;
+    padding: 30px;
+}
+
+.empty-state .icon {
+    font-size: 36px;
+    opacity: 0.15;
+    color: var(--blue);
+}
+
+.empty-state p {
+    font-size: 14px;
+    max-width: 320px;
+    line-height: 1.6;
+}
+
+/* ================================================================
+   BOTTOM BAR — Voice + text + scenarios
+   All 60px+ touch targets preserved
+   ================================================================ */
+.bottom-bar {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-overlay);
+    border-top: 1px solid var(--border-solid);
+    padding: 8px 10px;
+    gap: 8px;
+    box-shadow: 0 -2px 8px rgba(17,20,24,0.4);
+}
+
+.bottom-voice-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+}
+
+/* PTT — Blueprint primary button, oversized */
+.ptt-button {
+    width: 80px;
+    height: var(--touch-min);
+    border-radius: var(--radius);
+    border: none;
+    background: linear-gradient(180deg, #4C90F0 0%, #2D72D2 100%);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    box-shadow: 0 0 0 1px rgba(17,20,24,.4), 0 1px 2px rgba(17,20,24,.5);
+    transition: all 0.1s;
+}
+
+.ptt-button:active {
+    transform: scale(0.97);
+    background: linear-gradient(180deg, #2D72D2 0%, #215DB0 100%);
+}
+
+.ptt-button.recording {
+    background: linear-gradient(180deg, #E76A6E 0%, #CD4246 100%);
+    box-shadow: 0 0 0 1px rgba(17,20,24,.4), 0 0 12px rgba(231,106,110,0.3);
+    animation: rec-pulse 1s ease-in-out infinite;
+}
+
+.ptt-button.processing {
+    background: linear-gradient(180deg, #EC9A3C 0%, #C87619 100%);
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+@keyframes rec-pulse {
+    50% { box-shadow: 0 0 0 1px rgba(17,20,24,.4), 0 0 24px rgba(231,106,110,0.5); }
+}
+
+.ptt-icon { display: flex; }
+.ptt-label { font-size: 9px; letter-spacing: 1.5px; }
+
+/* Transcript — Blueprint input well */
+.transcript-box {
+    background: var(--bg-well);
+    border: 1px solid var(--border-solid);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    height: var(--touch-min);
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    box-shadow: inset 0 1px 2px rgba(17,20,24,0.5);
+}
+
+.transcript-box .label { display: none; }
+
+/* Text input — Blueprint input group */
+.text-input-area {
+    display: flex;
+    gap: 4px;
+    height: var(--touch-min);
+}
+
+.text-input-area input {
+    width: 200px;
+    background: var(--bg-well);
+    border: 1px solid var(--border-solid);
+    border-radius: var(--radius);
+    padding: 0 12px;
+    color: var(--text-heading);
+    font-size: 15px;
+    font-family: var(--font-mono);
+    outline: none;
+    height: 100%;
+    box-shadow: inset 0 1px 2px rgba(17,20,24,0.5);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.text-input-area input::placeholder { color: var(--text-disabled); }
+
+.text-input-area input:focus {
+    border-color: var(--blue);
+    box-shadow: inset 0 1px 2px rgba(17,20,24,0.5), 0 0 0 2px rgba(76,144,240,0.25);
+}
+
+.text-input-area button {
+    background: linear-gradient(180deg, var(--bg-raised) 0%, var(--bg-card) 100%);
+    color: var(--text);
+    border: 1px solid var(--border-solid);
+    border-radius: var(--radius);
+    padding: 0 16px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    height: 100%;
+    min-width: 70px;
+    box-shadow: var(--shadow-1);
+    transition: all 0.1s;
+}
+
+.text-input-area button:active {
+    background: var(--bg-hover);
+}
+
+/* Scenario row */
+.bottom-scenarios-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.bottom-scenarios-row .scn-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-disabled);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    margin-right: 2px;
+}
+
+.scenario-btn {
+    flex: 1;
+    min-height: 48px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-solid);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-1);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: all 0.1s;
+}
+
+.scenario-btn:active {
+    background: var(--bg-hover);
+}
+
+.scenario-btn.active {
+    background: var(--blue-bg);
+    border-color: var(--blue);
+    color: var(--blue);
+    box-shadow: var(--shadow-1), 0 0 0 1px var(--blue-dim);
+}
+
+.last-command { display: none; }
+
+/* Audio */
+.response-audio { margin-top: 6px; }
+.response-audio audio { width: 100%; height: 36px; }
+.audio-player { display: none; }
+
+/* ================================================================
+   ROSTER
+   ================================================================ */
+.roster-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.roster-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    min-height: 52px;
+    cursor: pointer;
+    font-size: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-solid);
+    border-radius: var(--radius);
+    border-left: 3px solid transparent;
+    box-shadow: var(--shadow-1);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: all 0.1s;
+}
+
+.roster-item:active {
+    background: var(--bg-hover);
+    border-left-color: var(--blue);
+}
+
+.roster-item .name {
+    font-weight: 600;
+    color: var(--text-heading);
+}
+
+.roster-item .rank {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.roster-blood {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--red-bright);
+    background: var(--red-bg);
+    border: 1px solid rgba(231, 106, 110, 0.35);
+    border-radius: var(--radius);
+    vertical-align: middle;
+}
+
+.roster-blood-unk {
+    opacity: 0.5;
+    font-weight: 600;
+}
+
+/* ================================================================
+   SCROLLBAR — Blueprint dark style, wide for gloves
+   ================================================================ */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-well); }
+::-webkit-scrollbar-thumb {
+    background: var(--bg-raised);
+    border: 2px solid var(--bg-well);
+    border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--bg-hover); }
+
+/* ================================================================
+   SPINNER
+   ================================================================ */
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--border-solid);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 900px) {
+    .main-content { grid-template-columns: 1fr; }
+    .detail-panel { display: none; }
+}
+
+@media (max-width: 600px) {
+    .bottom-voice-row { grid-template-columns: auto 1fr; }
+    .text-input-area { display: none; }
+    .header { grid-template-columns: 1fr; }
+    .header-right { justify-content: flex-start; flex-wrap: wrap; }
+}
