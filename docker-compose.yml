@@ -1,0 +1,21 @@
+# Project Hail Mary — one command: docker compose up --build
+# Copy .env.example → .env and add API keys before first run.
+
+services:
+  hail-mary:
+    build: .
+    image: hail-mary:latest
+    container_name: hail-mary
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    environment:
+      PORT: "8000"
+    env_file:
+      - .env
+    volumes:
+      # Persist FHIR SQLite + WAL across restarts
+      - hail_mary_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  hail_mary_data:

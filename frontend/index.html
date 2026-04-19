@@ -53,6 +53,26 @@
                 <div class="response-audio" id="response-audio-wrap">
                     <button type="button" id="tts-play-btn" class="tts-play-btn" style="display:none" aria-label="Play voice briefing">▶ Play briefing</button>
                     <audio id="audio-response" style="display:none" controls playsinline preload="auto"></audio>
+                    <div id="stt-confidence-bar" class="stt-confidence-bar stt-confidence-bar--standby" aria-live="polite">
+                        <div class="stt-line-primary stt-line-standby">STT confidence — standby</div>
+                        <div class="stt-line-pipeline stt-line-standby">After PTT: Meta DNS64 → ElevenLabs isolation → Scribe v2; scores populate here.</div>
+                    </div>
+                    <div id="isolation-compare-wrap" class="isolation-compare-wrap" hidden>
+                        <div class="isolation-compare-head">ISOLATION A/B — pipeline input vs ElevenLabs output</div>
+                        <p class="isolation-compare-note" id="isolation-compare-note" hidden></p>
+                        <div class="isolation-compare-row">
+                            <div class="isolation-compare-cell">
+                                <span class="isolation-label">Pre-isolation</span>
+                                <span class="isolation-hint">(after Meta DNS64 if WAV)</span>
+                                <audio id="audio-pre-isolation" class="isolation-audio" controls playsinline preload="metadata"></audio>
+                            </div>
+                            <div class="isolation-compare-cell">
+                                <span class="isolation-label">Post-isolation</span>
+                                <span class="isolation-hint">(ElevenLabs)</span>
+                                <audio id="audio-post-isolation" class="isolation-audio" controls playsinline preload="metadata"></audio>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

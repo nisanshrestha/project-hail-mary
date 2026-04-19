@@ -15,6 +15,8 @@ const UI = (() => {
 
     let _vitalsRaf = null;
     let _responseAudioUrl = null;
+    let _comparePreUrl = null;
+    let _comparePostUrl = null;
     const VITALS_MAX = 72;
 
     function stopVitalsLiveGraph() {
@@ -354,7 +356,113 @@ const UI = (() => {
         }).join('');
     }
 
-    function renderResponse(text, audioB64) {
+    function setIsolationCompare(data) {
+        const wrap = document.getElementById('isolation-compare-wrap');
+        const note = document.getElementById('isolation-compare-note');
+        const preEl = document.getElementById('audio-pre-isolation');
+        const postEl = document.getElementById('audio-post-isolation');
+        if (!wrap || !preEl || !postEl) return;
+
+        if (_comparePreUrl) {
+            URL.revokeObjectURL(_comparePreUrl);
+            _comparePreUrl = null;
+        }
+        if (_comparePostUrl) {
+            URL.revokeObjectURL(_comparePostUrl);
+            _comparePostUrl = null;
+        }
+        preEl.removeAttribute('src');
+        postEl.removeAttribute('src');
+
+        if (note) {
+            note.hidden = true;
+            note.textContent = '';
+        }
+
+        if (!data) {
+            wrap.hidden = true;
+            return;
+        }
+
+        if (data.omitted) {
+            wrap.hidden = false;
+            if (note) {
+                note.hidden = false;
+                note.textContent = data.reason
+                    ? `Comparison audio omitted: ${data.reason}`
+                    : 'Comparison audio omitted (size limit).';
+            }
+            return;
+        }
+
+        if (note) note.hidden = true;
+
+        function attach(el, b64, mime, which) {
+            try {
+                const binary = atob(b64);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                const blob = new Blob([bytes], { type: mime || 'audio/wav' });
+                const url = URL.createObjectURL(blob);
+                if (which === 'pre') _comparePreUrl = url;
+                else _comparePostUrl = url;
+                el.src = url;
+            } catch (e) {
+                console.warn('Isolation compare decode failed:', e);
+            }
+        }
+
+        attach(preEl, data.pre_b64, data.pre_mime, 'pre');
+        attach(postEl, data.post_b64, data.post_mime, 'post');
+        wrap.hidden = false;
+    }
+
+    function setVoicePipelineReport(report) {
+        const bar = document.getElementById('stt-confidence-bar');
+        if (!bar) return;
+        if (!report) {
+            bar.classList.add('stt-confidence-bar--standby');
+            bar.innerHTML = `
+                <div class="stt-line-primary stt-line-standby">STT confidence — standby</div>
+                <div class="stt-line-pipeline stt-line-standby">After PTT: Meta DNS64 → ElevenLabs isolation → Scribe v2; scores populate here.</div>`;
+            return;
+        }
+
+        bar.classList.remove('stt-confidence-bar--standby');
+
+        const lang = report.stt_language_pct != null ? `${report.stt_language_pct}%` : '—';
+        const words = report.stt_words_pct != null ? `${report.stt_words_pct}%` : '—';
+
+        const dnsMap = {
+            applied: 'Meta DNS64: applied',
+            skipped_non_wav: 'Meta DNS64: skipped (non-WAV input)',
+            unavailable: 'Meta DNS64: unavailable',
+        };
+        const isoMap = {
+            applied: 'ElevenLabs isolation: applied',
+            skipped_short: 'ElevenLabs isolation: skipped (clip under ~5s)',
+            skipped_disabled: 'ElevenLabs isolation: disabled',
+            unavailable: 'ElevenLabs isolation: unavailable',
+            error: 'ElevenLabs isolation: error',
+            passthrough_empty: 'ElevenLabs isolation: empty response',
+        };
+
+        const dns = dnsMap[report.meta_denoiser] || `Meta DNS64: ${report.meta_denoiser}`;
+        const iso = isoMap[report.elevenlabs_isolation] || `ElevenLabs isolation: ${report.elevenlabs_isolation}`;
+        const isoDetail = report.elevenlabs_isolation_detail
+            ? ` <span class="stt-pipe-detail">(${escapeHtml(String(report.elevenlabs_isolation_detail))})</span>`
+            : '';
+        const errLine = report.stt_error
+            ? `<div class="stt-line-pipeline stt-stt-err">Scribe error: ${escapeHtml(String(report.stt_error))}</div>`
+            : '';
+
+        bar.innerHTML = `
+            <div class="stt-line-primary">STT (ElevenLabs Scribe v2) — language ${lang} · word confidence ${words}</div>
+            <div class="stt-line-pipeline">${dns} · ${iso}${isoDetail}</div>
+            ${errLine}`;
+    }
+
+    function renderResponse(text, audioB64, voicePipelineReport) {
         const box = document.getElementById('response-box');
         const audioEl = document.getElementById('audio-response');
 
@@ -371,6 +479,8 @@ const UI = (() => {
             }
             const ttsClear = document.getElementById('tts-play-btn');
             if (ttsClear) ttsClear.style.display = 'none';
+            setVoicePipelineReport(null);
+            setIsolationCompare(null);
             return;
         }
 
@@ -460,6 +570,8 @@ const UI = (() => {
             audioEl.style.display = 'none';
             hideTtsBtn();
         }
+
+        setVoicePipelineReport(voicePipelineReport || null);
     }
 
     function updateStatus(config) {
@@ -523,5 +635,6 @@ const UI = (() => {
         renderRoster, updateStatus, updateModeLabels,
         setTranscript, setLastCommand, setPttState, setScenarioActive,
         scrollVitalsIntoView, stopVitalsLiveGraph, startVitalsLiveGraph,
+        setIsolationCompare,
     };
 })();

@@ -195,7 +195,8 @@ const App = (() => {
         }
 
         const outText = data.response_text || data.message || null;
-        UI.renderResponse(outText, data.audio_b64);
+        UI.renderResponse(outText, data.audio_b64, data.voice_pipeline_report);
+        UI.setIsolationCompare(data.isolation_compare || null);
     }
 
     async function toggleMode(isAi) {

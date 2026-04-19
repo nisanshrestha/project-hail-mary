@@ -12,7 +12,9 @@ import asyncio
 import base64
 import io
 import logging
+import math
 import os
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +30,18 @@ _available = False
 _isolation_enabled = True
 
 
+def _isolation_env_enabled() -> bool:
+    """True when ElevenLabs audio isolation should run (default: on).
+
+    Empty or unset ``ELEVENLABS_ISOLATION`` is treated as **on** so a blank
+    ``.env`` line does not accidentally disable filtering.
+    """
+    raw = os.getenv("ELEVENLABS_ISOLATION", "on").strip().lower()
+    if not raw:
+        return True
+    return raw in ("on", "true", "1", "yes")
+
+
 def init():
     """Initialize the ElevenLabs client."""
     global _client, _available, _isolation_enabled
@@ -41,7 +55,7 @@ def init():
         from elevenlabs.client import ElevenLabs
         _client = ElevenLabs(api_key=api_key)
         _available = True
-        _isolation_enabled = os.getenv("ELEVENLABS_ISOLATION", "on").lower() in ("on", "true", "1", "yes")
+        _isolation_enabled = _isolation_env_enabled()
         logger.info("ElevenLabs client initialized (isolation: %s)",
                      "ON" if _isolation_enabled else "OFF")
     except Exception as e:
@@ -62,27 +76,25 @@ def set_isolation_enabled(enabled: bool):
     _isolation_enabled = enabled
 
 
-async def isolate_audio(audio_bytes: bytes) -> bytes:
-    """Remove background noise via ElevenLabs Audio Isolation API.
+async def isolate_audio_with_meta(audio_bytes: bytes) -> tuple[bytes, dict[str, Any]]:
+    """Audio Isolation API — returns cleaned bytes and status for UI / telemetry.
 
-    POST /v1/audio-isolation — neural speech separation that strips
-    gunfire, explosions, vehicle noise, and other combat interference.
-
-    Args:
-        audio_bytes: Raw or pre-denoised WAV/PCM audio.
-
-    Returns:
-        Cleaned audio bytes, or original if isolation fails/unavailable.
+    Status values: ``applied``, ``skipped_short``, ``skipped_disabled``, ``unavailable``, ``error``.
     """
-    if not _available or _client is None or not _isolation_enabled:
-        return audio_bytes
+    meta: dict[str, Any] = {"status": "unavailable", "detail": None}
 
-    # ElevenLabs requires minimum ~4.6s audio; skip isolation for short clips
-    MIN_BYTES = 16000 * 2 * 5  # 5 seconds at 16kHz 16-bit mono = 160,000 bytes
-    if len(audio_bytes) < MIN_BYTES:
-        logger.debug("Audio too short for isolation (%d bytes), skipping", len(audio_bytes))
-        return audio_bytes
+    if not _available or _client is None:
+        meta["status"] = "unavailable"
+        meta["detail"] = "elevenlabs client off"
+        return audio_bytes, meta
 
+    if not _isolation_enabled:
+        meta["status"] = "skipped_disabled"
+        meta["detail"] = "isolation off"
+        return audio_bytes, meta
+
+    # Always call the isolation API when enabled (no minimum-length skip).
+    # Very short clips may still be rejected by the API; errors fall through below.
     try:
         audio_file = io.BytesIO(audio_bytes)
         ext = "wav" if audio_bytes[:4] == b"RIFF" else "webm"
@@ -98,28 +110,74 @@ async def isolate_audio(audio_bytes: bytes) -> bytes:
 
         if cleaned:
             logger.info("ElevenLabs isolation: %d → %d bytes", len(audio_bytes), len(cleaned))
-            return cleaned
+            meta["status"] = "applied"
+            meta["detail"] = f"{len(audio_bytes)}→{len(cleaned)} B"
+            return cleaned, meta
 
         logger.warning("ElevenLabs isolation returned empty, using original")
-        return audio_bytes
+        meta["status"] = "passthrough_empty"
+        return audio_bytes, meta
 
     except Exception as e:
         logger.error("ElevenLabs audio isolation failed, passing through: %s", e)
-        return audio_bytes
+        meta["status"] = "error"
+        meta["detail"] = str(e)[:160]
+        return audio_bytes, meta
 
 
-async def speech_to_text(audio_bytes: bytes) -> str:
-    """Transcribe audio bytes using ElevenLabs Scribe v2.
+async def isolate_audio(audio_bytes: bytes) -> bytes:
+    """Remove background noise via ElevenLabs Audio Isolation API."""
+    b, _ = await isolate_audio_with_meta(audio_bytes)
+    return b
 
-    Args:
-        audio_bytes: Cleaned WAV audio (post-denoiser).
 
-    Returns:
-        Transcribed text string.
+def _parse_speech_to_text_result(result: Any) -> dict[str, Any]:
+    """Extract text and confidence fields from Scribe v2 response (chunk or multichannel)."""
+    chunk = result
+    if hasattr(result, "transcripts") and result.transcripts:
+        chunk = result.transcripts[0]
+    if chunk is None or not hasattr(chunk, "text"):
+        return {
+            "text": "",
+            "language_confidence": None,
+            "word_confidence": None,
+        }
+
+    text = (chunk.text or "").strip()
+    lang_p = getattr(chunk, "language_probability", None)
+
+    words = getattr(chunk, "words", None) or []
+    token_probs: list[float] = []
+    for w in words:
+        wt = getattr(w, "type", None)
+        if hasattr(wt, "value"):
+            wt = wt.value
+        if str(wt) != "word":
+            continue
+        lp = getattr(w, "logprob", None)
+        if lp is None:
+            continue
+        # log p (natural); higher is better; cap for exp stability
+        token_probs.append(math.exp(min(0.0, float(lp))))
+
+    word_conf = sum(token_probs) / len(token_probs) if token_probs else None
+
+    return {
+        "text": text,
+        "language_confidence": float(lang_p) if lang_p is not None else None,
+        "word_confidence": word_conf,
+    }
+
+
+async def transcribe_audio(audio_bytes: bytes) -> dict[str, Any]:
+    """Transcribe with ElevenLabs Scribe v2; return text + confidence metrics.
+
+    ``language_confidence`` is language-detection score (0–1). ``word_confidence``
+    is mean token probability derived from word-level ``logprob`` values.
     """
     if not _available or _client is None:
         logger.debug("ElevenLabs STT unavailable, returning empty transcript")
-        return ""
+        return {"text": "", "language_confidence": None, "word_confidence": None}
 
     try:
         audio_file = io.BytesIO(audio_bytes)
@@ -130,15 +188,22 @@ async def speech_to_text(audio_bytes: bytes) -> str:
             file=audio_file,
             model_id="scribe_v2",
             language_code="en",
+            timestamps_granularity="word",
         )
 
-        transcript = result.text if hasattr(result, "text") else str(result)
-        logger.info("STT transcript: %s", transcript[:100])
-        return transcript
+        out = _parse_speech_to_text_result(result)
+        logger.info("STT transcript: %s", (out["text"] or "")[:100])
+        return out
 
     except Exception as e:
         logger.error("ElevenLabs STT failed: %s", e)
-        return ""
+        return {"text": "", "language_confidence": None, "word_confidence": None, "error": str(e)}
+
+
+async def speech_to_text(audio_bytes: bytes) -> str:
+    """Transcribe audio bytes using ElevenLabs Scribe v2 (text only)."""
+    data = await transcribe_audio(audio_bytes)
+    return data.get("text") or ""
 
 
 def _sanitize_tts_input(text: str) -> str:
@@ -191,7 +256,7 @@ def _tts_sync(text: str) -> str:
                             stability=0.55,
                             similarity_boost=0.75,
                             style=0.25,
-                            speed=1.0,
+                            speed=1.5,
                         ),
                     )
                 else:

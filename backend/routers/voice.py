@@ -6,11 +6,14 @@ FHIR lookup → Triage/LLM → ElevenLabs TTS → Audio out
 
 from __future__ import annotations
 
+import base64
 import io
 import logging
+import os
 import re
 import wave
 from dataclasses import asdict
+from typing import Any
 
 from fastapi import APIRouter, File, UploadFile
 
@@ -198,6 +201,68 @@ def _extract_intent(transcript: str) -> dict:
     }
 
 
+def _audio_mime(b: bytes) -> str:
+    if len(b) >= 4 and b[:4] == b"RIFF":
+        return "audio/wav"
+    if len(b) >= 4 and b[:4] == b"\x1a\x45\xdf\xa3":
+        return "audio/webm"
+    return "application/octet-stream"
+
+
+def _isolation_compare_payload(pre: bytes, post: bytes) -> dict[str, Any]:
+    """Base64 pre/post isolation audio for browser A/B playback."""
+    cap = int(os.getenv("VOICE_COMPARE_MAX_BYTES", "8000000"))
+    total = len(pre) + len(post)
+    if total > cap:
+        return {
+            "omitted": True,
+            "reason": f"combined {total} B exceeds VOICE_COMPARE_MAX_BYTES ({cap})",
+        }
+    return {
+        "omitted": False,
+        "pre_b64": base64.standard_b64encode(pre).decode("ascii"),
+        "post_b64": base64.standard_b64encode(post).decode("ascii"),
+        "pre_mime": _audio_mime(pre),
+        "post_mime": _audio_mime(post),
+    }
+
+
+def _voice_pipeline_report(
+    *,
+    is_wav: bool,
+    meta_denoiser_applied: bool,
+    isolation_meta: dict[str, Any],
+    stt: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Payload for UI: STT confidence (ElevenLabs Scribe) + preprocess stages."""
+    if not is_wav:
+        denoiser_label = "skipped_non_wav"
+    elif meta_denoiser_applied:
+        denoiser_label = "applied"
+    else:
+        denoiser_label = "unavailable"
+
+    report: dict[str, Any] = {
+        "meta_denoiser": denoiser_label,
+        "elevenlabs_isolation": isolation_meta.get("status", "unknown"),
+        "elevenlabs_isolation_detail": isolation_meta.get("detail"),
+        "stt_language_pct": None,
+        "stt_words_pct": None,
+    }
+
+    if stt:
+        lp = stt.get("language_confidence")
+        wp = stt.get("word_confidence")
+        if lp is not None:
+            report["stt_language_pct"] = round(float(lp) * 100.0, 1)
+        if wp is not None:
+            report["stt_words_pct"] = round(float(wp) * 100.0, 1)
+        if stt.get("error"):
+            report["stt_error"] = stt["error"]
+
+    return report
+
+
 @router.post("/process")
 async def process_voice(audio: UploadFile = File(...)):
     """Full voice pipeline: audio → denoise → STT → triage → TTS."""
@@ -208,19 +273,38 @@ async def process_voice(audio: UploadFile = File(...)):
     wav_bytes = _convert_webm_to_wav(audio_bytes)
     is_wav = wav_bytes[:4] == b"RIFF"
 
+    meta_denoiser_applied = False
+    isolation_meta: dict[str, Any] = {"status": "unknown", "detail": None}
+
     if is_wav:
         # Stage 1: Meta Denoiser (local, offline) — needs WAV
-        cleaned_audio = denoiser_service.denoise_audio(wav_bytes)
+        pre_isolation = denoiser_service.denoise_audio(wav_bytes)
+        meta_denoiser_applied = denoiser_service.is_available()
         # Stage 2: ElevenLabs Audio Isolation (cloud) — accepts WAV
-        cleaned_audio = await elevenlabs_service.isolate_audio(cleaned_audio)
+        cleaned_audio, isolation_meta = await elevenlabs_service.isolate_audio_with_meta(
+            pre_isolation
+        )
     else:
         # Browser sent WebM/Opus that couldn't be converted to WAV locally.
         # Skip local denoiser, send original to ElevenLabs isolation (accepts WebM).
         logger.info("WAV conversion failed, sending original %s to ElevenLabs directly",
                      audio.content_type)
-        cleaned_audio = await elevenlabs_service.isolate_audio(audio_bytes)
+        pre_isolation = audio_bytes
+        cleaned_audio, isolation_meta = await elevenlabs_service.isolate_audio_with_meta(
+            audio_bytes
+        )
 
-    transcript = await elevenlabs_service.speech_to_text(cleaned_audio)
+    post_isolation = cleaned_audio
+    isolation_compare = _isolation_compare_payload(pre_isolation, post_isolation)
+
+    stt_result = await elevenlabs_service.transcribe_audio(cleaned_audio)
+    transcript = (stt_result.get("text") or "").strip()
+    voice_pipeline_report = _voice_pipeline_report(
+        is_wav=is_wav,
+        meta_denoiser_applied=meta_denoiser_applied,
+        isolation_meta=isolation_meta,
+        stt=stt_result,
+    )
 
     if not transcript:
         return {
@@ -231,6 +315,8 @@ async def process_voice(audio: UploadFile = File(...)):
             "response_text": "",
             "audio_b64": "",
             "vitals_focus": False,
+            "voice_pipeline_report": voice_pipeline_report,
+            "isolation_compare": isolation_compare,
         }
 
     intent = _extract_intent(transcript)
@@ -300,6 +386,8 @@ async def process_voice(audio: UploadFile = File(...)):
         "audio_b64": audio_b64,
         "mode": llm_service.get_mode(),
         "vitals_focus": vitals_focus,
+        "voice_pipeline_report": voice_pipeline_report,
+        "isolation_compare": isolation_compare,
     }
 
 
